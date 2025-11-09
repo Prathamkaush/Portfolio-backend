@@ -6,7 +6,7 @@ const app = express();
 const port = process.env.PORT || 4000 ;
 app.use(
   cors({
-    origin: "https://pratham-kaushik.vercel.app/", // your frontend dev server
+    origin: "https://pratham-kaushik.vercel.app", // your frontend dev server
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
   })
