@@ -3,7 +3,7 @@ import cors from "cors";
 import contactRouter from "./routes/contact.js";
 
 const app = express();
-
+const port = process.env.PORT || 4000 ;
 app.use(
   cors({
     origin: "http://localhost:5173", // your frontend dev server
@@ -15,4 +15,4 @@ app.use(
 app.use(express.json());
 app.use("/api/contact", contactRouter);
 
-app.listen(4000, () => console.log("Backend running on port 4000"));
+app.listen(port, () => console.log("Backend running on port "+ port));
