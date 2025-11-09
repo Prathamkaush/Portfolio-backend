@@ -1,7 +1,6 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import fetch from "node-fetch";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 const router = express.Router();
@@ -10,42 +9,35 @@ router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
 
   if (!name || !email || !message) {
-    return res.status(400).json({ error: "All fields are required." });
+    return res.status(400).json({ error: "All fields required" });
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: true, // true for port 465 (SSL), false for 587 (TLS)
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       },
+      body: JSON.stringify({
+        from: "Portfolio <onboarding@resend.dev>",
+        to: process.env.EMAIL_TO,
+        subject: `Portfolio Contact: ${name}`,
+        html: `<p>${message}</p><p>From: <b>${name}</b> (${email})</p>`,
+      }),
     });
 
-    // ✅ define all email fields in one object
-    const mailOptions = {
-      from: `"${name}" <${email}>`,
-      to: process.env.EMAIL_TO, // make sure EMAIL_TO exists in .env
-      subject: `Portfolio Contact: ${name}`,
-      text: message,
-      html: `<p>${message}</p><p>From: ${name} - ${email}</p>`,
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ Resend Error:", errorData);
+      return res.status(500).json({ error: "Failed to send email", details: errorData });
+    }
 
-    // ✅ Log safely
-    console.log("📨 Sending email with details:");
-    console.log("   To:", mailOptions.to);
-    console.log("   Subject:", mailOptions.subject);
-    console.log("   Message:", mailOptions.text);
-
-    await transporter.sendMail(mailOptions);
-
-    console.log("✅ Email sent successfully!");
+    console.log("✅ Email sent successfully via Resend!");
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Error sending email:", err);
-    res.status(500).json({ error: "Failed to send email" });
+    res.status(500).json({ error: "Failed to send email", details: err.message });
   }
 });
 
